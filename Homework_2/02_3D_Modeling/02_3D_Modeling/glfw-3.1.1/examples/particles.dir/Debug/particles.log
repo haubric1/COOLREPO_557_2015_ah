@@ -1,0 +1,8 @@
+﻿  Building Custom Rule C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/HCI-557-CG/SDK/glfw-3.1.1/examples/CMakeLists.txt
+  CMake does not need to re-run because C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\glfw-3.1.1\examples\CMakeFiles\generate.stamp is up-to-date.
+  particles.c
+  tinycthread.c
+  getopt.c
+  Generating Code...
+  particles.vcxproj -> C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\glfw-3.1.1\examples\Debug\particles.exe
+  particles.vcxproj -> C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/HCI-557-CG/SDK/glfw-3.1.1/examples/Debug/particles.pdb (Full PDB)

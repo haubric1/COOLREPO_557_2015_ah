@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\glfw-3.1.1\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\CMakeFiles\1b5f4b0df190838ac6a05c027f9b1428\uninstall.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\glfw-3.1.1\CMakeFiles\uninstall" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FC4FC857-6CBF-3474-A700-A5886AE8014E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
