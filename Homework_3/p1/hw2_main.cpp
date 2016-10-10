@@ -9,6 +9,7 @@
 // stl include
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 // GLEW include
 #include <GL/glew.h>
@@ -27,14 +28,11 @@
 #include "controls.h"
 #include "HCI557Common.h"
 #include "CoordSystem.h"
+#include "make_sphere.h"
 
 // this line tells the compiler to use the namespace std.
 // Each object, command without a namespace is assumed to be part of std. 
 using namespace std;
-#include <algorithm>
-
-
-
 
 static const string vs_string =
 "#version 410 core                                                 \n"
@@ -42,19 +40,71 @@ static const string vs_string =
 "uniform mat4 projectionMatrix;                                    \n"
 "uniform mat4 viewMatrix;                                           \n"
 "uniform mat4 modelMatrix;                                          \n"
+"																	\n"
+"uniform vec3 light_position;										\n"
+"uniform vec3 ambient_color;										\n"
+"uniform vec3 diffuse_color;										\n"
+"uniform vec3 specular_color;										\n"
+"uniform vec3 cone_direction;										\n"
+"																	\n"
+"uniform float ambient_intensity;									\n"
+"uniform float diffuse_intensity;									\n"
+"uniform float specular_intensity;									\n"
+"uniform float shininess;											\n"
+"uniform float cone_angle;											\n"
+"																	\n"
+"uniform float attenuation_coefficient;								\n"
+"																	\n"
 "in vec3 in_Position;                                               \n"
-"                                                                   \n"
-"in vec3 in_Color;                                                  \n"
+"in vec3 in_Normal;                                                  \n"
+"																	\n"
 "out vec3 pass_Color;                                               \n"
 "                                                                  \n"
 "void main(void)                                                   \n"
 "{                                                                 \n"
-"    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(in_Position, 1.0);  \n"
-"    pass_Color = in_Color;                                         \n"
-"}                                                                 \n";
+"	vec3 normal = normalize(in_Normal);															 \n"
+"	vec4 transformedNormal = normalize(transpose(inverse(modelMatrix)) * vec4( normal, 1.0 ));	 \n"
+"	vec4 surfacePosition = viewMatrix * modelMatrix * vec4( in_Position , 1.0 );				 \n"
+"																								 \n"
+"	vec4 surface_to_light = normalize( vec4(light_position,1.0) - surfacePosition);				 \n"
+"																								 \n"
+"	// Diffuse Color																			 \n"
+"	float diffuse_coefficient = max( dot(transformedNormal, surface_to_light), 0.0);			 \n"
+"	vec3 out_diffuse_color = diffuse_color * diffuse_coefficient * diffuse_intensity;			 \n"
+"																								 \n"
+"	// Ambient Color																			 \n"
+"	vec3 out_ambient_color = ambient_color * ambient_intensity;									 \n"
+"																								 \n"
+"	// Specular Color																			 \n"
+"	vec3 incidenceVector = -surface_to_light.xyz;												 \n"
+"	vec3 reflectionVector = reflect(incidenceVector, transformedNormal.xyz);					 \n"
+"	vec3 cameraPosition = vec3( -viewMatrix[3][0], -viewMatrix[3][1], -viewMatrix[3][2]);		 \n"
+"	vec3 surfaceToCamera = normalize(cameraPosition - surfacePosition.xyz);						 \n"
+"	float cosAngle = max( dot(surfaceToCamera, reflectionVector), 0.0);							 \n"
+"	float specular_coefficient = pow(cosAngle, shininess);										 \n"
+"	vec3 out_specular_color = specular_color * specular_coefficient * specular_intensity;		 \n"
+"																								 \n"
+"	// Attenuation																				 \n"
+"	float distance_to_light = length(light_position.xyz - surfacePosition.xyz);					 \n"
+"	float attenuation = 1.0 / (1.0 + attenuation_coefficient * pow(distance_to_light, 2));		 \n"
+"																								 \n"
+"	// Spotlight																				 \n"
+"	vec3 cone_direction_norm = normalize(cone_direction);										 \n"
+"	vec3 ray_direction = -surface_to_light.xyz;													 \n"
+"	float light_to_surface_angle = degrees(acos(dot(ray_direction, cone_direction_norm)));		 \n"
+"	if(light_to_surface_angle > cone_angle){													 \n"
+"		attenuation = 0.0;																		 \n"
+"	}																							 \n"
+"																								 \n"
+"	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(in_Position, 1.0);			 \n"
+"	vec3 linear_Color = vec3(out_ambient_color + attenuation * (out_diffuse_color + out_specular_color));				 \n"
+"	vec3 gamma = vec3(1.0/2.2);																	 \n"
+"	vec3 final_Color = pow(linear_Color, gamma);												 \n"
+"	pass_Color = final_Color;																	 \n"
+"}																								 \n";
 
 // Fragment shader source code. This determines the colors in the fragment generated in the shader pipeline. In this case, it colors the inside of our triangle specified by our vertex shader.
-static const string fs_string  =
+static const string fs_string =
 "#version 410 core                                                 \n"
 "                                                                  \n"
 "in vec3 pass_Color;                                                 \n"
@@ -81,12 +131,8 @@ GLFWwindow*         window;
 
 // Define some of the global variables we're using for this sample
 GLuint program;
-
-
-
-
-
-
+// Number of vertices for our sphere
+int number_vertices = -1;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //// Fill this functions with your model code.
@@ -97,385 +143,78 @@ unsigned int vaoID[2];
 unsigned int vboID[4];
 
 /*!
- ADD YOUR CODE TO CREATE THE TRIANGLE STRIP MODEL TO THIS FUNCTION
- */
+This function creates a sphere model.
+*/
 unsigned int createTriangleStripModel(void)
 {
-    // use the vertex array object vaoID[0] for this model representation
-	// Vertex and Color arrays
-	GLfloat vertices[] =
-	{
-		//surface 1
-		2,1,0,
-		2,1,1,
-		0,1,0,
-		0,1,1,
-		0,0,0,
-		0,0,1,
-		//surface 2
-		2,0,1,
-		2,1,1,
-		0,0,1,
-		0,1,1,
-		//surface 3
-		2,0,2,
-		2,0,1,
-		2,1,2,
-		2,1,1,
-		2,3,1,
-		2,3,0,
-		//surface 4
-		2,1,1,
-		2,1,0,
-		2,3,0,
-		//surface 5
-		2,3,0,
-		3,3,0,
-		2,3,1,
-		3,3,1,
-		2,1,2,
-		3,1,2,
-		2,0,2,
-		3,0,2,
-
-		//The back!
-		//surface 6
-		2,3,0,
-		3,3,0,
-		3,1,0,
-		3,0,0,
-		2,1,0,
-		2,0,0,
-		0,1,0,
-		0,0,0,
-
-		//surface 7
-		0,0,1,
-		0,0,0,
-		2,0,1,
-		2,0,0,
-
-		//surface 8
-		2,0,2,
-		2,0,0,
-		3,0,2,
-		3,0,0,
-		3,1,2,
-		3,1,0,
-		3,3,1,
-		3,3,0
-	};
-
-	GLfloat colors[] =
-	{
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0,
-		0,1,0
-	};
-
-    //TODO:
 	
-	glGenVertexArrays(2, &vaoID[0]); //creating vertex array objects for the triangle strips model
+	//set the center and radius of the sphere
+	float center[3] = { 0.0, 0.0, 0.0 };
+	float radius = 2.0;
+
+	//set the number of rows, and the number of segments per row
+	int rows = 10;
+	int segments = 10;
+
+	//compute the number of segments needed for storage
+	int N = NumVec3ArrayElements(rows, segments);
+
+	float* points = new float[N];
+	float* normals = new float[N];
+
+	number_vertices = Make_Sphere(rows, segments, center, radius, points, normals);
+
+	//TODO:
+
+	glGenVertexArrays(1, &vaoID[0]); //creating vertex array objects for the triangle strips model
 	glBindVertexArray(vaoID[0]); //binding it!
 
 	glGenBuffers(2, vboID); //generate our vertex buffer object
 
 	//vertices!
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); //bind our VBO
-	glBufferData(GL_ARRAY_BUFFER, 81 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, N * sizeof(GLfloat), points, GL_STATIC_DRAW);
 
 	glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);//disable the vertex array
 
 	//Colors!
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); //bind our VBO
-	glBufferData(GL_ARRAY_BUFFER, 81 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, N * sizeof(GLfloat), normals, GL_STATIC_DRAW);
 
 	glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);//disable the vertex array
 
 	glBindVertexArray(0);
 
-	glBindAttribLocation(program, 0, "in_Position");
-	glBindAttribLocation(program, 1, "in_Color");
-    
-    return 1;
+	return 1;
 }
 
 /*!
- ADD YOUR CODE TO CREATE A MODEL USING PRIMITIVES OF YOUR CHOISE TO THIS FUNCTION
- */
-unsigned int createPolygonModel(void)
-{
-    // use the vertex array object vaoID[1] for this model representation
-	GLfloat vertices[] = 
-	{
-		//surface A (Two triangles, 6 vertices)
-		0,0,0,
-		0,1,0,
-		0,1,1,
-
-		0,1,1,
-		0,0,1,
-		0,0,0,
-
-		//surface B (two triangles, 6 vertices, 12 vertices total)
-		0,0,1,
-		0,1,1,
-		2,1,1,
-		
-		2,1,1,
-		2,0,1,
-		0,0,1,
-
-		//surface C (two triangles, 6 vertices, 18 vertices total)
-		0,1,0,
-		2,1,0,
-		2,1,1,
-
-		2,1,1,
-		0,1,1,
-		0,1,0,
-
-		//surface D (three triangles, 9 vertices, 27 vertices running total)
-		2,0,0,
-		2,3,0,
-		2,3,1,
-
-		2,0,0,
-		2,3,1,
-		2,1,2,
-
-		2,0,0,
-		2,1,2,
-		2,0,2,
-
-		//surface E (two triangles, 6 vertices, 33 vertices running total)
-		2,3,0,
-		3,3,1,
-		3,3,0,
-
-		3,3,1,
-		2,3,0,
-		2,3,1,
-
-		//surface F (2 triangles, 6 vertices, 39 vertices running total)
-		2,3,1,
-		3,3,1,
-		3,1,2,
-
-		3,1,2,
-		2,1,2,
-		2,3,1,
-
-		//surface G (2 triangles, 6 vertices, 45 vertices running total)
-		2,1,2,
-		3,1,2,
-		3,0,2,
-
-		3,0,2,
-		2,0,2,
-		2,1,2,
-
-		//The backside!
-		//surface H (Back of D) (3 triangles, 9 vertices, 54 vertices running total)
-		3,0,0,
-		3,3,1,
-		3,3,0,
-
-		3,0,0,
-		3,1,2,
-		3,3,1,
-
-		3,3,0,
-		3,1,2,
-		3,0,2,
-
-		//surface I (Bottom of cut rectangular prism) (2 triangles, 6 vertices, 60 vertices running total)
-		3,0,0,
-		3,3,0,
-		2,3,0,
-
-		2,3,0,
-		3,3,0,
-		2,0,0,
-
-		//Surface J (Bottom of short rectangular prism) (2 triangles, 6 vertices, 66 vertices running total)
-		2,0,0,
-		2,1,0,
-		0,1,0,
-
-		0,1,0,
-		0,0,0,
-		2,1,0,
-
-		//surface K (Back of short prism) (2 triangles, 6 vertices, 72 vertices running total)
-		0,0,0,
-		2,0,0,
-		0,0,1,
-
-		2,0,0,
-		0,0,1,
-		2,0,1,
-
-		//Surface L (Back of tall prism) (2 triangles, 6 vertices, 78 vertices final total!)
-		3,0,0,
-		2,0,0,
-		3,0,2,
-		
-		2,0,0,
-		3,0,2,
-		2,0,2
-
-
-	};
-
-	//colors!
-	GLfloat colors[78 * 3];
-
-	for (int i = 0; i < 78; ++i)
-		{
-			colors[i * 3] = 0;
-			colors[(i * 3) + 1] = 0;
-			colors[(i * 3) + 2] = 1;
-		};
-
-    //TODO:
-	glGenVertexArrays(2, &vaoID[1]); //creating vertex array objects for the triangle strips model
-	glBindVertexArray(vaoID[1]); //binding it!
-
-	glGenBuffers(2, &vboID[2]); //generate our vertex buffer object
-
-	//vertices!
-	glBindBuffer(GL_ARRAY_BUFFER, vboID[2]); //bind our VBO
-	glBufferData(GL_ARRAY_BUFFER, 87 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);//disable the vertex array
-
-	//Colors!
-	glBindBuffer(GL_ARRAY_BUFFER, vboID[3]); //bind our VBO
-	glBufferData(GL_ARRAY_BUFFER, 87 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
-
-	glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);//disable the vertex array
-
-	glBindVertexArray(0);
-
-	glBindAttribLocation(program, 0, "in_Position");
-	glBindAttribLocation(program, 1, "in_Color");
-    
-    return 1;
-}
-
-
-
-/*!
- ADD YOUR CODE TO RENDER THE TRIANGLE STRIP MODEL TO THIS FUNCTION
- */
+This function renders a sphere.
+*/
 void renderTriangleStripModel(void)
 {
 
-    // Bind the buffer and switch it to an active buffer
-    glBindVertexArray(vaoID[0]);
-        
-	// HERE: THIS CAUSES AN ERROR BECAUSE I DO NOT KNOW HOW MANY TRIANGLES / VERTICES YOU HAVE.
-	// COMPLETE THE LINE
-    // Draw the triangles
-    glDrawArrays(GL_TRIANGLE_STRIP, 0 , 18);
-	glDrawArrays(GL_TRIANGLE_STRIP, 18, 12);
-	glDrawArrays(GL_TRIANGLE_STRIP, 30, 18);
-	glDrawArrays(GL_TRIANGLE_STRIP, 48, 9);
-	glDrawArrays(GL_TRIANGLE_STRIP, 57, 24);
-	glDrawArrays(GL_TRIANGLE_STRIP, 81, 24);
-	glDrawArrays(GL_TRIANGLE_STRIP, 105, 12);
-	glDrawArrays(GL_TRIANGLE_STRIP, 117, 24);
+	// Bind the buffer and switch it to an active buffer
+	glBindVertexArray(vaoID[0]);
 
+	// Draw the triangles
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, number_vertices);
 
-
-    // Unbind our Vertex Array Object
-    glBindVertexArray(0);
+	// Unbind our Vertex Array Object
+	glBindVertexArray(0);
 }
-
-
-
-/*!
- ADD YOUR CODE TO RENDER THE TRIANGLE STRIP MODEL TO THIS FUNCTION
- */
-void renderPolygonModel(void)
-{
-
-    // Bind the buffer and switch it to an active buffer
-    glBindVertexArray(vaoID[1]);
-        
-
-	// HERE: THIS CAUSES AN ERROR BECAUSE I DO NOT KNOW HOW MANY POLYGONS YOU HAVE.
-	// COMPLETE THE LINE
-    // Draw the triangles
-    glDrawArrays(GL_TRIANGLES, 0 , 78*3);
-
-
-    // Unbind our Vertex Array Object
-    glBindVertexArray(0);
-}
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 /*!
- This function creates the two models
- */
+This function creates the models.
+*/
 void setupScene(void) {
-    
-    createPolygonModel();
-    renderPolygonModel();
-    
+
+	createTriangleStripModel();
+
 }
 
 
@@ -483,161 +222,301 @@ void setupScene(void) {
 
 int main(int argc, const char * argv[])
 {
-    
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Init glfw, create a window, and init glew
-    
-    // Init the GLFW Window
-    window = initWindow();
-    
-    
-    // Init the glew api
-    initGlew();
-    
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// Init glfw, create a window, and init glew
+
+	// Init the GLFW Window
+	window = initWindow();
+
+
+	// Init the glew api
+	initGlew();
+
 	// Prepares some defaults
 	CoordSystemRenderer* coordinate_system_renderer = new CoordSystemRenderer(10.0);
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// The Shader Program starts here
-    
-    // Vertex shader source code. This draws the vertices in our window. We have 3 vertices since we're drawing an triangle.
-    // Each vertex is represented by a vector of size 4 (x, y, z, w) coordinates.
-    static const string vertex_code = vs_string;
-    static const char * vs_source = vertex_code.c_str();
-    
-    // Fragment shader source code. This determines the colors in the fragment generated in the shader pipeline. In this case, it colors the inside of our triangle specified by our vertex shader.
-    static const string fragment_code = fs_string;
-    static const char * fs_source = fragment_code.c_str();
-    
-    // This next section we'll generate the OpenGL program and attach the shaders to it so that we can render our triangle.
-    program = glCreateProgram();
-    
-    // We create a shader with our fragment shader source code and compile it.
-    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fs_source, NULL);
-    glCompileShader(fs);
-    
-    // We create a shader with our vertex shader source code and compile it.
-    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &vs_source, NULL);
-    glCompileShader(vs);
-    
-    // We'll attach our two compiled shaders to the OpenGL program.
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    
-    glLinkProgram(program);
-    
-    // We'll specify that we want to use this program that we've attached the shaders to.
-    glUseProgram(program);
-    
-    //// The Shader Program ends here
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    
-    /// IGNORE THE NEXT PART OF THIS CODE
-    /// IGNORE THE NEXT PART OF THIS CODE
-    /// IGNORE THE NEXT PART OF THIS CODE
-    // It controls the virtual camera
-    
-    // Set up our green background color
-    static const GLfloat clear_color[] = { 0.6f, 0.7f, 1.0f, 1.0f };
-    static const GLfloat clear_depth[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    
-    
-    projectionMatrix = glm::perspective(1.1f, (float)800 / (float)600, 0.1f, 100.f);
-    modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); // Create our model matrix which will halve the size of our model
-    viewMatrix = glm::lookAt(glm::vec3(1.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    
-    int projectionMatrixLocation = glGetUniformLocation(program, "projectionMatrix"); // Get the location of our projection matrix in the shader
-    int viewMatrixLocation = glGetUniformLocation(program, "viewMatrix"); // Get the location of our view matrix in the shader
-    int modelMatrixLocation = glGetUniformLocation(program, "modelMatrix"); // Get the location of our model matrix in the shader
-    
-    
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]); // Send our projection matrix to the shader
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]); // Send our view matrix to the shader
-    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
-    
-    
-	 //// The Shader Program ends here
-    //// START TO READ AGAIN
-    //// START TO READ AGAIN
-    //// START TO READ AGAIN
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// The Shader Program starts here
+
+	// Vertex shader source code. This draws the vertices in our window. We have 3 vertices since we're drawing an triangle.
+	// Each vertex is represented by a vector of size 4 (x, y, z, w) coordinates.
+	static const string vertex_code = vs_string;
+	static const char * vs_source = vertex_code.c_str();
+
+	// Fragment shader source code. This determines the colors in the fragment generated in the shader pipeline. In this case, it colors the inside of our triangle specified by our vertex shader.
+	static const string fragment_code = fs_string;
+	static const char * fs_source = fragment_code.c_str();
+
+	// This next section we'll generate the OpenGL program and attach the shaders to it so that we can render our triangle.
+	program = glCreateProgram();
+
+	// We create a shader with our fragment shader source code and compile it.
+	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fs, 1, &fs_source, NULL);
+	glCompileShader(fs);
+
+	// We create a shader with our vertex shader source code and compile it.
+	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vs, 1, &vs_source, NULL);
+	glCompileShader(vs);
+
+	// We'll attach our two compiled shaders to the OpenGL program.
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+
+	glLinkProgram(program);
+
+	// We'll specify that we want to use this program that we've attached the shaders to.
+	glUseProgram(program);
+
+	//// The Shader Program ends here
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    glBindAttribLocation(program, 0, "in_Position");
-    glBindAttribLocation(program, 1, "in_Color");
-    
+	// Set up our green background color
+	static const GLfloat clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const GLfloat clear_depth[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    
-    // this creates the scene
-    setupScene();
-    
-    int i=0;
+	//setting up our projection, model, and view matrices
+	projectionMatrix = glm::perspective(1.1f, (float)800 / (float)600, 0.1f, 100.f);
+	modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); // Create our model matrix which will halve the size of our model
+	viewMatrix = glm::lookAt(glm::vec3(1.0f, 0.0f, 15.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Enable depth test
-    // ignore this line, it allows us to keep the distance value after we proejct each object to a 2d canvas.
-    glEnable(GL_DEPTH_TEST);
-    
-    // This is our render loop. As long as our window remains open (ESC is not pressed), we'll continue to render things.
-    while(!glfwWindowShouldClose(window))
-    {
-        
-        // Clear the entire buffer with our green color (sets the background to be green).
-        glClearBufferfv(GL_COLOR , 0, clear_color);
-        glClearBufferfv(GL_DEPTH , 0, clear_depth);
-        
-        // this draws the coordinate system
-		coordinate_system_renderer->draw();
-        
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //// This generate the object
-        // Enable the shader program
-        glUseProgram(program);
-        
-        // this changes the camera location
-        glm::mat4 rotated_view = viewMatrix * GetRotationMatrix();
-        glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &rotated_view[0][0]); // send the view matrix to our shader
-        
+	//Getting locations in our shader program to send values to
+	int projectionMatrixLocation = glGetUniformLocation(program, "projectionMatrix"); // Get the location of our projection matrix in the shader
+	int viewMatrixLocation = glGetUniformLocation(program, "viewMatrix"); // Get the location of our view matrix in the shader
+	int modelMatrixLocation = glGetUniformLocation(program, "modelMatrix"); // Get the location of our model matrix in the shader
 
-        // This moves the model to the right
-        modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
-        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
-        
+	int lightPositionLocation = glGetUniformLocation(program, "light_position");
+	int ambientColorLocation = glGetUniformLocation(program, "ambient_color");
+	int diffuseColorLocation = glGetUniformLocation(program, "diffuse_color");
+	int specularColorLocation = glGetUniformLocation(program, "specular_color");
+	int ambientIntensityLocation = glGetUniformLocation(program, "ambient_intensity");
+	int diffuseIntensityLocation = glGetUniformLocation(program, "diffuse_intensity");
+	int specularIntensityLocation = glGetUniformLocation(program, "specular_intensity");
+	int shininessLocation = glGetUniformLocation(program, "shininess");
+	int attenuationCoefficientLocation = glGetUniformLocation(program, "attenuation_coefficient");
+	int coneAngleLocation = glGetUniformLocation(program, "cone_angle");
+	int coneDirectionLocation = glGetUniformLocation(program, "cone_direction");
 
-		// This line renders your triangle strip model
-        renderTriangleStripModel();
-        
+	glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]); // Send our projection matrix to the shader
+	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]); // Send our view matrix to the shader
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
 
-        // This moves the model to the left
-        modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, -0.0f, 0.0f));
-        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
-        
-		// This line renders your Ppolygon model
-        renderPolygonModel();
-        
-        
+
+//// The Shader Program ends here
+//// START TO READ AGAIN
+//// START TO READ AGAIN
+//// START TO READ AGAIN
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+	glBindAttribLocation(program, 0, "in_Position");
+	glBindAttribLocation(program, 1, "in_Normal");
+
+
+
+	// this creates the scene
+	setupScene();
+
+	int i = 1;
+
+	// Enable depth test
+	// ignore this line, it allows us to keep the distance value after we proejct each object to a 2d canvas.
+	glEnable(GL_DEPTH_TEST);
+
+	// This is our render loop. As long as our window remains open (ESC is not pressed), we'll continue to render things.
+	while (!glfwWindowShouldClose(window))
+	{
+
+		// Clear the entire buffer with our green color (sets the background to be green).
+		glClearBufferfv(GL_COLOR, 0, clear_color);
+		glClearBufferfv(GL_DEPTH, 0, clear_depth);
+
+		// this draws the coordinate system
+		//coordinate_system_renderer->draw();
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//// This generate the object
+		// Enable the shader program
+		glUseProgram(program);
+
+		// this changes the camera location
+		glm::mat4 rotated_view = viewMatrix * GetRotationMatrix();
+		glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &rotated_view[0][0]); // send the view matrix to our shader
+
+		//This moves the model far to the left
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-7.5f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]);
+		
+		//Set shader settings for the first sphere
+		//Setting the light position, cone angle, cone direction, and attenuation
+		glm::vec3 lightPos = glm::vec3( 0.0, 0.0, 200.0 );
+		glm::vec3 coneDirection = glm::vec3(1.0, 0.0, 0.0);
+		float coneAngle = 360.0;
+		float attenuationCoefficient = 0.0;
+		glUniform3fv(lightPositionLocation, 1, &lightPos[0]);
+		glUniform3fv(coneDirectionLocation, 1, &coneDirection[0]);
+		glUniform1f(coneAngleLocation, coneAngle);
+		glUniform1f(attenuationCoefficientLocation, attenuationCoefficient);
+
+		//Setting the ambient color and intensity
+		float ambientIntensity = 0.0f;
+		glm::vec3 ambientColor = glm::vec3( 0.0, 1.0, 0.0 );
+		glUniform1f(ambientIntensityLocation, ambientIntensity);
+		glUniform3fv(ambientColorLocation, 1, &ambientColor[0]);
+
+		//setting the diffuse color and intensity
+		float diffuseIntensity = 3.0f;
+		glm::vec3 diffuseColor = glm::vec3( 0.5, 0.0, 0.0 );
+		glUniform1f(diffuseIntensityLocation, diffuseIntensity);
+		glUniform3fv(diffuseColorLocation, 1, &diffuseColor[0]);
+
+		//setting the specular color, intensity, and shininess
+		float specularIntensity = 1.0f;
+		glm::vec3 specularColor = glm::vec3( 1.0, 1.0, 1.0 );
+		float shininess = 1.0f;
+		glUniform1f(specularIntensityLocation, specularIntensity);
+		glUniform1f(shininessLocation, shininess);
+		glUniform3fv(specularColorLocation, 1, &specularColor[0]);
+
+		//render the first sphere.
+		renderTriangleStripModel();
+
+		// This moves the model to the left
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
+
+		//Set shader settings for the second sphere
+		//Setting the light position, cone direction, cone angle, and attenuation
+		lightPos = glm::vec3(-5.0, 0.0, 10.0);
+		coneDirection = glm::vec3(1.0, 0.0, 0.0);
+		coneAngle = 360.0;
+		attenuationCoefficient = 0.0;
+		glUniform3fv(lightPositionLocation, 1, &lightPos[0]);
+		glUniform3fv(coneDirectionLocation, 1, &coneDirection[0]);
+		glUniform1f(coneAngleLocation, coneAngle);
+		glUniform1f(attenuationCoefficientLocation, attenuationCoefficient);
+
+		//Setting the ambient color and intensity
+		ambientIntensity = 0.0f;
+		ambientColor = glm::vec3(0.0, 1.0, 0.0);
+		glUniform1f(ambientIntensityLocation, ambientIntensity);
+		glUniform3fv(ambientColorLocation, 1, &ambientColor[0]);
+
+		//setting the diffuse color and intensity
+		diffuseIntensity = 5.0f;
+		diffuseColor = glm::vec3(0.0, 0.0, 1.0);
+		glUniform1f(diffuseIntensityLocation, diffuseIntensity);
+		glUniform3fv(diffuseColorLocation, 1, &diffuseColor[0]);
+
+		//setting the specular color, intensity, and shininess
+		specularIntensity = 0.0f;
+		specularColor = glm::vec3(1.0, 1.0, 1.0);
+		shininess = 3.0f;
+		glUniform1f(specularIntensityLocation, specularIntensity);
+		glUniform1f(shininessLocation, shininess);
+		glUniform3fv(specularColorLocation, 1, &specularColor[0]);
+
+		// This line renders the second sphere.
+		renderTriangleStripModel();
+
+		// This moves the model to the right
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, -0.0f, 0.0f));
+		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
+
+		//Set shader settings for the third sphere
+		//Setting the light position, cone direction, cone angle and attenuation
+		lightPos = glm::vec3(0.0, -5.0, 5.0);
+		attenuationCoefficient = 0.0;
+		coneDirection = glm::vec3(0.0, 1.0, -1.0);
+		coneAngle = 30.0;
+		glUniform3fv(lightPositionLocation, 1, &lightPos[0]);
+		glUniform3fv(coneDirectionLocation, 1, &coneDirection[0]);
+		glUniform1f(coneAngleLocation, coneAngle);
+		glUniform1f(attenuationCoefficientLocation, attenuationCoefficient);
+
+		//Setting the ambient color and intensity
+		ambientIntensity = 0.0f;
+		ambientColor = glm::vec3(0.0, 1.0, 0.0);
+		glUniform1f(ambientIntensityLocation, ambientIntensity);
+		glUniform3fv(ambientColorLocation, 1, &ambientColor[0]);
+
+		//setting the diffuse color and intensity
+		diffuseIntensity = 1.0f;
+		diffuseColor = glm::vec3(0.0, 1.0, 0.0);
+		glUniform1f(diffuseIntensityLocation, diffuseIntensity);
+		glUniform3fv(diffuseColorLocation, 1, &diffuseColor[0]);
+
+		//setting the specular color, intensity, and shininess
+		specularIntensity = 1.0f;
+		specularColor = glm::vec3(1.0, 1.0, 1.0);
+		shininess = 1.0f;
+		glUniform1f(specularIntensityLocation, specularIntensity);
+		glUniform1f(shininessLocation, shininess);
+		glUniform3fv(specularColorLocation, 1, &specularColor[0]);
+
+		// This line renders the third sphere
+		renderTriangleStripModel();
+
+		// This moves the model far to the right
+		modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(7.5f, -0.0f, 0.0f));
+		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]); // Send our model matrix to the shader
+
+		//Set shader settings for the fourth sphere
+		//Setting the light position, cone direction, cone angle and attenuation
+		lightPos = glm::vec3(5.0, -5.0, 5.0);
+		attenuationCoefficient = 0.0;
+		coneDirection = glm::vec3(0.0, 1.0, -1.0);
+		coneAngle = 30.0;
+		glUniform3fv(lightPositionLocation, 1, &lightPos[0]);
+		glUniform3fv(coneDirectionLocation, 1, &coneDirection[0]);
+		glUniform1f(coneAngleLocation, coneAngle);
+		glUniform1f(attenuationCoefficientLocation, attenuationCoefficient);
+
+		//Setting the ambient color and intensity
+		ambientIntensity = 0.2f;
+		ambientColor = glm::vec3(1.0, 1.0, 0.2);
+		glUniform1f(ambientIntensityLocation, ambientIntensity);
+		glUniform3fv(ambientColorLocation, 1, &ambientColor[0]);
+
+		//setting the diffuse color and intensity
+		diffuseIntensity = 0.8f;
+		diffuseColor = glm::vec3(1.0, 1.0, 0.3);
+		glUniform1f(diffuseIntensityLocation, diffuseIntensity);
+		glUniform3fv(diffuseColorLocation, 1, &diffuseColor[0]);
+
+		//setting the specular color, intensity, and shininess
+		specularIntensity = 1.0f;
+		specularColor = glm::vec3(1.0, 1.0, 1.0);
+		shininess = 1.0f;
+		glUniform1f(specularIntensityLocation, specularIntensity);
+		glUniform1f(shininessLocation, shininess);
+		glUniform3fv(specularColorLocation, 1, &specularColor[0]);
+
+		// This line renders the fourth sphere
+		renderTriangleStripModel();
+
 		// disable the shader program
-        glUseProgram(0);
+		glUseProgram(0);
 
 
-        //// This generate the object
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
-        
-        // Swap the buffers so that what we drew will appear on the screen.
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-        
-    }
-    
+		//// This generate the object
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+		// Swap the buffers so that what we drew will appear on the screen.
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+	}
+
 	// delete the coordinate system object
 	delete coordinate_system_renderer;
 
-    // Program clean up when the window gets closed.
-    glDeleteVertexArrays(2, vaoID);
-    glDeleteProgram(program);
+	// Program clean up when the window gets closed.
+	glDeleteVertexArrays(2, vaoID);
+	glDeleteProgram(program);
 }
 
