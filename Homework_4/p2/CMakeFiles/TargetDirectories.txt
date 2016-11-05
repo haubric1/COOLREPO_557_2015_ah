@@ -1,0 +1,3 @@
+C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/Projects/Homework_4/p1/CMakeFiles/HW4_Program.dir
+C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/Projects/Homework_4/p1/CMakeFiles/ALL_BUILD.dir
+C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/Projects/Homework_4/p1/CMakeFiles/ZERO_CHECK.dir

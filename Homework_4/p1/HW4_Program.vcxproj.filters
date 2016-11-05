@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\hw4_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\controls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\HCI557Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\CoordSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\ImgLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\ShaderFileUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\controls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\HCI557Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\CoordSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\ImgLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\ShaderFileUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_4\p1\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{B9C3BCD9-0504-3201-A2E7-86A4D230D0EB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{54519AFE-263C-30CB-B4A4-563BA2EF0FD6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
