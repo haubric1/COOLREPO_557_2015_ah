@@ -1,0 +1,7 @@
+# CMake generation dependency list for this directory.
+C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/HCI-557-CG/SDK/glew-1.13.0/CMakeLists.txt
+C:/Program Files/CMake/share/cmake-3.6/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.6/Modules/CMakeParseArguments.cmake
+C:/Program Files/CMake/share/cmake-3.6/Modules/WriteBasicConfigVersionFile.cmake
+C:/Program Files/CMake/share/cmake-3.6/Modules/CMakeParseArguments.cmake
+C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/HCI-557-CG/SDK/glew-1.13.0/src/glewConfig.cmake.in

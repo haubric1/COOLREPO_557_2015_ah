@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\hw2_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\controls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\HCI557Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\CoordSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\controls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\HCI557Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\CoordSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\Projects\Homework_2\02_3D_Modeling\02_3D_Modeling\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{C94754A3-5C5F-3736-961F-7AAE1D351309}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{61A26726-B13E-3819-B1EB-6DAFF724B6B4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

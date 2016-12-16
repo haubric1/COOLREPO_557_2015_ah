@@ -1,0 +1,16 @@
+﻿  Building Custom Rule C:/Users/Arlo/Desktop/Stuff/IAState Class Materials/557/HCI-557-CG/SDK/glfw-3.1.1/src/CMakeLists.txt
+  CMake does not need to re-run because C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\glfw-3.1.1\src\CMakeFiles\generate.stamp is up-to-date.
+  context.c
+  init.c
+  input.c
+  monitor.c
+  window.c
+  win32_init.c
+  win32_monitor.c
+  win32_time.c
+  win32_tls.c
+  win32_window.c
+  winmm_joystick.c
+  wgl_context.c
+  Generating Code...
+  glfw.vcxproj -> C:\Users\Arlo\Desktop\Stuff\IAState Class Materials\557\HCI-557-CG\SDK\lib\Debug\glfw.lib
