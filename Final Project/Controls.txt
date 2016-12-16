@@ -1,0 +1,4 @@
+Controls:
+Hover over a planet or star to highlight it!
+Click & release on it to follow it with the camera.
+Proxima Centauri is the one with a parrot on it.
