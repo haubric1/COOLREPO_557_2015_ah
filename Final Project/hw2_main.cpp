@@ -49,22 +49,22 @@ glm::mat4 inverseViewMatrix;
 GLFWwindow*         window;
 
 // Define some of the global variables we're using for this sample
-static const string program_vs_loc = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshader.vs";
-static const string program_fs_loc = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshader.fs";
-static const string program_vs_picker = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshaderpicker.vs";
-static const string program_fs_picker = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshaderpicker.fs";
-static const string program_vs_sky = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshadersky.vs";
-static const string program_fs_sky = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\finalshadersky.fs";
+static const string program_vs_loc = "..\\finalshader.vs";
+static const string program_fs_loc = "..\\finalshader.fs";
+static const string program_vs_picker = "..\\finalshaderpicker.vs";
+static const string program_fs_picker = "..\\finalshaderpicker.fs";
+static const string program_vs_sky = "..\\finalshadersky.vs";
+static const string program_fs_sky = "..\\finalshadersky.fs";
 
 // Define the locations of our skybox textures
-static const char* skybox_front = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars1.bmp";
-static const char* skybox_right = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars2.bmp";
-static const char* skybox_left = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars3.bmp";
-static const char* skybox_top = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars4.bmp";
-static const char* skybox_bottom = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars5.bmp";
-static const char* skybox_back = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\stars6.bmp";
+static const char* skybox_front = "..\\stars1.bmp";
+static const char* skybox_right = "..\\stars2.bmp";
+static const char* skybox_left = "..\\stars3.bmp";
+static const char* skybox_top = "..\\stars4.bmp";
+static const char* skybox_bottom = "..\\stars5.bmp";
+static const char* skybox_back = "..\\stars6.bmp";
 
-static const string environment_map = "C:\\Users\\Arlo\\Desktop\\Stuff\\IAState Class Materials\\557\\Projects\\Homework_2\\02_3D_Modeling\\02_3D_Modeling\\tex_1.bmp";
+static const string environment_map = "..\\tex_1.bmp";
 
 // Define the locations we'll store references to our shaders in.
 GLuint program, skybox;
